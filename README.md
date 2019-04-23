@@ -31,7 +31,7 @@ To validate Xml you will need to have xmllint installed:
 
     sudo apt-get install libxml2-utils
 
-To validate with Dita OT update the value of sub xmlCatalog below with a
+To validate with Dita OT update the value of `sub xmlCatalog` below with a
 catalog from:
 
   https://www.dita-ot.org/
