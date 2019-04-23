@@ -1,0 +1,129 @@
+#!/usr/bin/perl
+#-------------------------------------------------------------------------------
+# Run with Perl - a simple development environment for Xml and Perl using Geany.
+# Philip R Brenan at gmail dot com, Appa Apps Ltd, 2017-2019
+#-------------------------------------------------------------------------------
+
+=pod
+
+Integrated development environment for the Geany editor at:
+
+  https://www.geany.org/Download/Releases
+
+To compile or run Bash, C, Perl, Javascript programs or validate Xml without
+leaving the editor, enter the following on lines 1-2 of the dialog box reached
+by selecting the Geany menu actions:
+
+ "Build"=>"Set Build Commands"
+
+Commands to enter into the dialog box:
+
+  runWithPerl "%f"
+  runWithPerl --run "%f"
+
+Place this script in your:
+
+  ./local/bin/
+
+folder and run it once with no arguments to make itself executable:
+
+  perl ./local/bin/runWithPerl
+
+There-after pushing the right key in Geany or using the "Build" menu will cause
+the code you are editing to be compiled or run.
+
+To validate Xml you will need to have xmllint installed:
+
+  sudo apt-get install libxml2-utils
+
+To validate with Dita OT update the value of xmlCatalog below.
+
+=cut
+
+use Getopt::Long;
+qx(chmod ug+x $0);                                                              # Make executable
+
+sub xmlCatalog {q(/home/phil/r/dita/dita-ot-3.1/catalog-dita.xml)}              # Validate Xml with this catalog.
+
+my $run;                                                                        # Run program else syntax check source
+my $doc;                                                                        # Generate documentation from program source
+
+GetOptions                                                                      # Keywords
+ ('run' =>\$run,
+  'doc' =>\$doc,
+ );
+
+my $file = shift @ARGV;                                                         # File to process
+
+unless($file)                                                                   # Help
+ {say STDERR <<END;
+Input file name required!
+See the documentation at the start of this file: $0
+END
+  exit;
+ }
+
+if ($file =~ m(\.(dita|ditamap|xml)\Z))                                         # Xml
+ {my $C = xmlCatalog;
+  my $c = qq(xmllint --noent --noout "$file" && echo "Parses OK!" && export XML_CATALOG_FILES=$C && xmllint --noent --noout --valid - < "$file" && echo Valid);
+  say STDERR $c;
+  say STDERR qx($c);
+ }
+
+if ($file =~ m(\.(pl|pm)\Z))                                                    # Perl
+ {if ($run)
+   {say STDERR qx(perl -CSDA -w  "$file");
+   }
+  elsif ($doc)
+   {say STDERR "Document perl $file";
+    qx(use Data::Table::Text qw(:all); updatePerlModuleDocumentation($file));
+   }
+  else
+   {print STDERR qx(perl -CSDA -cw "$file");
+   }
+ }
+
+if ($file =~ m(\.(js|javascript)\Z))                                            # Javascript
+ {if ($run)
+   {my $c = qq(nodejs  --max_old_space_size=4096  "$file");
+    say STDERR $c;
+    print STDERR qx($c);
+   }
+  else
+   {print STDERR qx(nodejs -c "$file");
+   }
+ }
+
+if ($file =~ m(\.(sh|bash)\Z))                                                  # Bash
+ {if ($run)
+   {print STDERR qx(bash "$file");
+   }
+  else
+   {print STDERR qx(bash -x "$file");
+   }
+ }
+
+if ($file =~ m(\.(c|cpp|c\+\+)\Z))                                              # C
+ {my $lp = '-L/usr/lib/x86_64-linux-gnu/libperl.so.5.26 ';
+  my $cp = qq(-fstack-protector-strong -finput-charset=UTF-8);
+
+  for my $lib(qw(gtk+-3.0))
+   {$cp .= ' '.trim(qx(pkg-config --cflags $lib));
+    $lp .= ' '.trim(qx(pkg-config --libs $lib));
+   }
+
+  my $gcc = $file =~ m(\.c\Z)s ? q(gcc) : q(g++);
+
+  if ($run)
+   {my $o = $file =~ s(\.c.*\Z) (.o)gsr;
+    my $O = $o; $O =~ s(\A) (./) unless $o =~ m(\A/);
+    my $c = qq($gcc -Wall $cp -o "$o" "$file" $lp && $O);
+    say STDERR $c;
+    print STDERR qx($c);
+   }
+  else
+   {my $c = qq($gcc -Wall $cp -c "$file");
+    say STDERR $c;
+    print STDERR qx($c);
+   }
+ }
