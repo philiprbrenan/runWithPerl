@@ -35,4 +35,8 @@ To validate with Dita OT update the value of `sub xmlCatalog` below with a
 catalog from:
 
   https://www.dita-ot.org/
+  
+This does assume that you have install Kubuntu on your computer:
+
+  https://kubuntu.org/getkubuntu/
 
