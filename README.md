@@ -36,7 +36,7 @@ catalog from:
 
   https://www.dita-ot.org/
   
-This does assume that you have install Kubuntu on your computer:
+This does assume that you have installed Kubuntu on your computer:
 
   https://kubuntu.org/getkubuntu/
 
